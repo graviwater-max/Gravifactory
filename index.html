@@ -148,6 +148,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 
 .foot{margin-top:30px;font-size:11px;color:var(--text3);text-align:center}
 
+/* PDF */
+.pdf-btn{display:inline-flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid rgba(55,138,221,.35);background:var(--blue-l);color:var(--blue-d);transition:all .12s;white-space:nowrap}
+.pdf-btn:hover{background:#b5d4f4}
+.pdf-btn.has-pdf{background:var(--teal-l);color:var(--teal-d);border-color:rgba(29,158,117,.35)}
+.pdf-btn.has-pdf:hover{background:#9FE1CB}
+.pdf-upload-input{display:none}
+.pdf-drop-zone{border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:all .15s;margin-top:10px}
+.pdf-drop-zone:hover,.pdf-drop-zone.drag{border-color:var(--teal);background:var(--teal-l)}
+.pdf-drop-zone p{font-size:13px;color:var(--text2);margin-bottom:4px}
+.pdf-drop-zone span{font-size:11px;color:var(--text3)}
+.pdf-viewer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center}
+.pdf-viewer-bg.open{display:flex}
+.pdf-viewer{background:var(--surface);border-radius:var(--rl);width:90vw;max-width:900px;height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.pdf-viewer-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.pdf-viewer-hdr h4{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+.pdf-viewer-hdr .actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.pdf-viewer iframe{flex:1;border:none;width:100%}
+
 @media(max-width:700px){
   .metrics{grid-template-columns:repeat(2,1fr)}
   .zone-hd{grid-template-columns:10px 1fr auto auto}
@@ -248,6 +266,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<!-- PDF VIEWER -->
+<div class="pdf-viewer-bg" id="pdf-viewer-bg">
+  <div class="pdf-viewer">
+    <div class="pdf-viewer-hdr">
+      <h4 id="pdf-viewer-title">Devis PDF</h4>
+      <div class="actions">
+        <button class="btn btn-blue" onclick="downloadCurrentPdf()">↓ Télécharger</button>
+        <button class="btn btn-r" onclick="removePdf()" id="pdf-remove-btn">Supprimer le PDF</button>
+        <button class="btn" onclick="closePdfViewer()">✕ Fermer</button>
+      </div>
+    </div>
+    <iframe id="pdf-iframe" src=""></iframe>
+  </div>
+</div>
+
+<!-- INPUT FILE caché -->
+<input type="file" id="pdf-file-input" accept="application/pdf" class="pdf-upload-input" onchange="handlePdfUpload(event)"/>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -297,20 +333,21 @@ const DEFAULT_DATA = {
 };
 
 /* STATE */
-let zones, machineData;
+let zones, machineData, pdfData={};
 
 function loadState(){
   try{
     const s=localStorage.getItem('srctur_v3');
-    if(s){const p=JSON.parse(s);zones=p.zones;machineData=p.machineData;return;}
+    if(s){const p=JSON.parse(s);zones=p.zones;machineData=p.machineData;pdfData=p.pdfData||{};return;}
   }catch(e){}
   zones=JSON.parse(JSON.stringify(DEFAULT_ZONES));
   machineData=JSON.parse(JSON.stringify(DEFAULT_DATA));
+  pdfData={};
 }
 
 function saveState(){
   try{
-    localStorage.setItem('srctur_v3',JSON.stringify({zones,machineData}));
+    localStorage.setItem('srctur_v3',JSON.stringify({zones,machineData,pdfData}));
     document.getElementById('last-save').textContent='Sauvegardé à '+new Date().toLocaleTimeString('fr-FR');
   }catch(e){}
 }
@@ -480,6 +517,65 @@ function editCell(zone,id,field,el){
   });
 }
 
+/* PDF */
+let pdfUploadTarget = null; // {zone, id}
+let pdfViewerCurrent = null;
+
+function triggerPdfUpload(zone, id){
+  pdfUploadTarget={zone,id};
+  document.getElementById('pdf-file-input').value='';
+  document.getElementById('pdf-file-input').click();
+}
+
+function handlePdfUpload(e){
+  const file=e.target.files[0];
+  if(!file||file.type!=='application/pdf'){toast('Veuillez sélectionner un fichier PDF');return}
+  if(file.size>8*1024*1024){toast('PDF trop volumineux (max 8 Mo)');return}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const key=pdfUploadTarget.zone+'__'+pdfUploadTarget.id;
+    pdfData[key]={name:file.name,data:ev.target.result};
+    try{saveState();}catch(err){
+      toast('PDF trop lourd pour la sauvegarde locale — il sera visible uniquement cette session');
+    }
+    render();
+    toast('PDF "'+file.name+'" attaché');
+  };
+  reader.readAsDataURL(file);
+}
+
+function openPdfViewer(zone, id){
+  const key=zone+'__'+id;
+  const pdf=pdfData[key];
+  if(!pdf){toast('Aucun PDF attaché');return}
+  pdfViewerCurrent={zone,id,key};
+  document.getElementById('pdf-viewer-title').textContent=pdf.name;
+  document.getElementById('pdf-iframe').src=pdf.data;
+  document.getElementById('pdf-viewer-bg').classList.add('open');
+}
+
+function closePdfViewer(){
+  document.getElementById('pdf-viewer-bg').classList.remove('open');
+  document.getElementById('pdf-iframe').src='';
+  pdfViewerCurrent=null;
+}
+
+function downloadCurrentPdf(){
+  if(!pdfViewerCurrent)return;
+  const pdf=pdfData[pdfViewerCurrent.key];
+  if(!pdf)return;
+  const a=document.createElement('a');
+  a.href=pdf.data;a.download=pdf.name;a.click();
+}
+
+function removePdf(){
+  if(!pdfViewerCurrent)return;
+  if(!confirm('Supprimer le PDF attaché ?'))return;
+  delete pdfData[pdfViewerCurrent.key];
+  saveState();closePdfViewer();render();
+  toast('PDF supprimé');
+}
+
 /* EXPORT */
 function exportCSV(){
   let csv='\uFEFFZone,Machine,Fournisseur,Montant HT,Statut,Réf.,Date devis,Date commande,Date livraison\n';
@@ -567,17 +663,20 @@ function renderZones(){
     if(open){
       h+=`<div class="zone-body"><div style="overflow-x:auto">
         <table class="tbl">
-          <colgroup><col style="width:20%"><col style="width:14%"><col style="width:10%"><col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:4%"></colgroup>
+          <colgroup><col style="width:18%"><col style="width:13%"><col style="width:9%"><col style="width:10%"><col style="width:7%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:10%"><col style="width:4%"></colgroup>
           <thead><tr>
             <th>Machine <span style="font-weight:400;color:var(--blue-d);font-size:9px">(clic = éditer)</span></th>
             <th>Fournisseur</th><th>Montant HT</th><th>Statut</th>
-            <th>Réf.</th><th>Date devis</th><th>Commande</th><th>Livraison</th><th></th>
+            <th>Réf.</th><th>Date devis</th><th>Commande</th><th>Livraison</th><th>Devis PDF</th><th></th>
           </tr></thead>
           <tbody>`;
       if(machines.length===0){
-        h+=`<tr class="empty-row"><td colspan="9">${filter!=='tous'?'Aucune machine pour ce filtre':'Aucune machine — cliquez sur "+ Ajouter" ci-dessous'}</td></tr>`;
+        h+=`<tr class="empty-row"><td colspan="10">${filter!=='tous'?'Aucune machine pour ce filtre':'Aucune machine — cliquez sur "+ Ajouter" ci-dessous'}</td></tr>`;
       } else {
         machines.forEach(m=>{
+          const pdfKey=z.name+'__'+m.id;
+          const hasPdf=!!pdfData[pdfKey];
+          const pdfName=hasPdf?pdfData[pdfKey].name:'';
           h+=`<tr>
             <td><span class="editable" onclick="editCell('${z.name}',${m.id},'machine',this)">${m.machine}</span></td>
             <td><span class="editable" onclick="editCell('${z.name}',${m.id},'fournisseur',this)" style="color:var(--text2)">${m.fournisseur||'—'}</span></td>
@@ -587,6 +686,12 @@ function renderZones(){
             <td><span class="editable" onclick="editCell('${z.name}',${m.id},'dDevis',this)" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fmtDate(m.dDevis)}</span></td>
             <td><span class="editable" onclick="editCell('${z.name}',${m.id},'dCmd',this)" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fmtDate(m.dCmd)}</span></td>
             <td><span class="editable" onclick="editCell('${z.name}',${m.id},'dLiv',this)" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fmtDate(m.dLiv)}</span></td>
+            <td>
+              ${hasPdf
+                ? `<button class="pdf-btn has-pdf" onclick="openPdfViewer('${z.name}',${m.id})" title="${pdfName}">📄 Voir PDF</button>`
+                : `<button class="pdf-btn" onclick="triggerPdfUpload('${z.name}',${m.id})" title="Joindre un devis PDF">+ PDF</button>`
+              }
+            </td>
             <td><button class="del-btn" onclick="delMachine('${z.name}',${m.id})">✕</button></td>
           </tr>`;
         });
@@ -611,6 +716,9 @@ buildColorPicker('new-zone-colors','new', selectedNewColor);
 
 document.querySelectorAll('.modal-bg').forEach(el=>{
   el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open')});
+});
+document.getElementById('pdf-viewer-bg').addEventListener('click',e=>{
+  if(e.target===document.getElementById('pdf-viewer-bg'))closePdfViewer();
 });
 
 render();
