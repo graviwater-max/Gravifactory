@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parc Machine — Atelier SRCTUR</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+  --text:#1a1917;--text2:#6b6a66;--text3:#a0a09a;
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#0F6E56;
+  --blue:#378ADD;--blue-l:#E6F1FB;--blue-d:#185FA5;
+  --amber:#EF9F27;--amber-l:#FAEEDA;--amber-d:#854F0B;
+  --red:#E24B4A;--red-l:#FCEBEB;--red-d:#A32D2D;
+  --green:#639922;--green-l:#EAF3DE;--green-d:#3B6D11;
+  --r:10px;--rl:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 20px 60px}
+
+/* HEADER */
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+.hdr-left h1{font-size:21px;font-weight:600;letter-spacing:-.3px}
+.hdr-left p{font-size:12px;color:var(--text2);margin-top:3px}
+.hdr-right{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:background .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn-g{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-g:hover{background:var(--teal-d)}
+.btn-r{background:var(--red-l);color:var(--red-d);border-color:rgba(226,75,74,.3)}
+.btn-r:hover{background:#f7c1c1}
+.btn-blue{background:var(--blue-l);color:var(--blue-d);border-color:rgba(55,138,221,.3)}
+.btn-blue:hover{background:#b5d4f4}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:15px 17px}
+.mc-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.mc-val{font-size:21px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:-.5px}
+.mc-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.mc-bar{height:3px;background:var(--surface2);border-radius:2px;margin-top:9px;overflow:hidden}
+.mc-fill{height:100%;border-radius:2px;transition:width .6s}
+.c-ok{color:var(--teal-d)}.c-warn{color:var(--amber-d)}.c-err{color:var(--red-d)}
+
+/* CHART */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;margin-bottom:6px}
+.cr{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.cr:last-child{margin-bottom:0}
+.cr-lbl{font-size:12px;font-weight:500;color:var(--text2);width:120px;flex-shrink:0}
+.cr-track{flex:1;height:22px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.cr-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.cr-fill-lbl{font-size:10px;font-weight:600;color:#fff;font-family:'DM Mono',monospace;white-space:nowrap}
+.cr-amt{font-size:12px;font-family:'DM Mono',monospace;font-weight:500;width:90px;flex-shrink:0;text-align:right}
+.cr-pct{font-size:11px;color:var(--text3);width:38px;flex-shrink:0;text-align:right}
+
+/* SECTION HDR */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:22px 0 12px}
+.sec-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filters span{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
+.fb{font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 11px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:all .12s}
+.fb:hover{border-color:var(--teal);color:var(--teal-d)}
+.fb.on{background:var(--text);color:#fff;border-color:var(--text)}
+
+/* ZONE BLOCK */
+.zone{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.zone-hd{display:grid;grid-template-columns:12px 1fr auto auto 150px auto auto;gap:8px;align-items:center;padding:12px 14px}
+.zdot{width:10px;height:10px;border-radius:50%;flex-shrink:0;cursor:pointer;position:relative}
+.zdot:hover::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid currentColor;opacity:.4}
+.zname-wrap{display:flex;align-items:center;gap:6px}
+.zname{font-size:14px;font-weight:500}
+.zname-edit-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 5px;border-radius:4px;opacity:0;transition:opacity .1s}
+.zone-hd:hover .zname-edit-btn{opacity:1}
+.zname-edit-btn:hover{color:var(--blue-d);background:var(--blue-l)}
+.zcnt{font-size:11px;color:var(--text3);background:var(--surface2);border-radius:20px;padding:2px 8px;white-space:nowrap}
+.ztot{font-size:14px;font-weight:600;font-family:'DM Mono',monospace;text-align:right;white-space:nowrap}
+.zprog{min-width:120px}
+.zpbar{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:3px}
+.zpfill{height:100%;border-radius:2px}
+.zpct{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.zone-actions{display:flex;gap:4px;align-items:center}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:3px 6px;border-radius:5px;transition:all .1s;line-height:1;white-space:nowrap}
+.icon-btn:hover{color:var(--red-d);background:var(--red-l)}
+.icon-btn.expand{color:var(--text3);font-size:10px;transition:transform .2s}
+.icon-btn.expand:hover{color:var(--text2);background:var(--surface2)}
+.icon-btn.expand.o{transform:rotate(90deg)}
+
+/* TABLE */
+.zone-body{border-top:1px solid var(--border)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:#fafaf7;white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafaf7}
+.editable{cursor:pointer;border-radius:5px;padding:2px 5px;margin:-2px -5px;transition:background .1s;display:inline-block;min-width:30px}
+.editable:hover{background:var(--blue-l)}
+.cell-input{font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 7px;border:1.5px solid var(--blue);border-radius:6px;background:var(--surface);color:var(--text);outline:none;width:100%}
+.cell-input:focus{box-shadow:0 0 0 2px rgba(55,138,221,.2)}
+.ssel{font-family:'DM Sans',sans-serif;font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text)}
+.ssel:focus{outline:none;border-color:var(--blue)}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 5px;border-radius:4px;transition:all .1s}
+.del-btn:hover{color:var(--red-d);background:var(--red-l)}
+.empty-row td{text-align:center;color:var(--text3);padding:18px}
+.zone-foot{padding:9px 13px;background:#fafaf7;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* STATUS */
+.s-devis{background:var(--blue-l);color:var(--blue-d)}
+.s-valide{background:var(--green-l);color:var(--green-d)}
+.s-commande{background:var(--amber-l);color:var(--amber-d)}
+.s-livre{background:var(--teal-l);color:var(--teal-d)}
+.s-annule{background:var(--red-l);color:var(--red-d)}
+
+/* ADD ZONE BAR */
+.add-zone-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border:1px dashed var(--border2);border-radius:var(--rl);margin-bottom:10px;flex-wrap:wrap}
+.add-zone-bar input{font-family:'DM Sans',sans-serif;font-size:13px;padding:6px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--bg);color:var(--text);outline:none;width:200px}
+.add-zone-bar input:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(29,158,117,.12)}
+.color-pick{display:flex;gap:6px;align-items:center}
+.cp{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0}
+.cp:hover{transform:scale(1.2)}
+.cp.sel{border-color:var(--text)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--rl);padding:24px;width:480px;max-width:94vw;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.modal p{font-size:13px;color:var(--text2);margin-bottom:16px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.fgrp{display:flex;flex-direction:column;gap:4px}
+.fgrp label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.fgrp input,.fgrp select{font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 9px;border:1px solid var(--border2);border-radius:7px;background:var(--surface);color:var(--text);outline:none}
+.fgrp input:focus,.fgrp select:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(29,158,117,.12)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+
+/* RENAME MODAL */
+.rename-modal{background:var(--surface);border-radius:var(--rl);padding:22px;width:360px;max-width:92vw}
+.rename-modal h3{font-size:15px;font-weight:600;margin-bottom:14px}
+.rename-input{font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 11px;border:1.5px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text);outline:none;width:100%;margin-bottom:14px}
+.rename-input:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(29,158,117,.12)}
+.rename-colors{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;font-size:13px;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:999;font-family:'DM Sans',sans-serif}
+.toast.show{opacity:1}
+
+.foot{margin-top:30px;font-size:11px;color:var(--text3);text-align:center}
+
+@media(max-width:700px){
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .zone-hd{grid-template-columns:10px 1fr auto auto}
+  .zcnt,.zprog,.cr-amt{display:none}
+  .modal-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>Suivi Parc Machine — Atelier SRCTUR</h1>
+      <p id="last-save">Prêt · données sauvegardées localement</p>
+    </div>
+    <div class="hdr-right">
+      <button class="btn" onclick="exportCSV()">↓ CSV</button>
+      <button class="btn" onclick="window.print()">Imprimer</button>
+      <button class="btn btn-r" onclick="confirmReset()">Réinitialiser</button>
+    </div>
+  </div>
+
+  <div class="metrics" id="metrics"></div>
+
+  <div class="sec-title" style="margin-bottom:10px">Répartition du budget par zone</div>
+  <div class="chart-card" id="bar-chart"></div>
+
+  <div class="sec-hdr">
+    <div class="sec-title">Machines par zone</div>
+    <div class="filters">
+      <span>Filtre :</span>
+      <button class="fb on" onclick="setF('tous',this)">Tous</button>
+      <button class="fb" onclick="setF('devis',this)">Devis</button>
+      <button class="fb" onclick="setF('valide',this)">Validé</button>
+      <button class="fb" onclick="setF('commande',this)">Commandé</button>
+      <button class="fb" onclick="setF('livre',this)">Livré</button>
+      <button class="fb" onclick="setF('annule',this)">Annulé</button>
+    </div>
+  </div>
+
+  <div id="zones"></div>
+
+  <!-- AJOUTER UNE ZONE -->
+  <div class="add-zone-bar" id="add-zone-bar">
+    <span style="font-size:12px;font-weight:500;color:var(--text2);white-space:nowrap">+ Nouvelle zone :</span>
+    <input id="new-zone-name" placeholder="Nom de la zone…" maxlength="40" onkeydown="if(event.key==='Enter')addZone()"/>
+    <div class="color-pick" id="new-zone-colors"></div>
+    <button class="btn btn-g" onclick="addZone()">Créer la zone</button>
+  </div>
+
+  <div class="foot">SRCTUR · Parc Machine · <span id="now"></span> · <span id="nb-total"></span></div>
+</div>
+
+<!-- MODAL MACHINE -->
+<div class="modal-bg" id="modal-machine">
+  <div class="modal">
+    <h3>Ajouter une machine</h3>
+    <p id="modal-zone-label" style="color:var(--text2)"></p>
+    <div class="modal-grid">
+      <div class="fgrp" style="grid-column:1/-1"><label>Nom de la machine *</label><input id="m-machine" placeholder="Ex : Tour CNC Mazak"/></div>
+      <div class="fgrp"><label>Fournisseur</label><input id="m-four" placeholder="Ex : Mazak"/></div>
+      <div class="fgrp"><label>Montant HT (€) *</label><input id="m-montant" type="number" placeholder="0" min="0"/></div>
+      <div class="fgrp"><label>Statut</label>
+        <select id="m-statut">
+          <option value="devis">Devis</option>
+          <option value="valide">Validé</option>
+          <option value="commande">Commandé</option>
+          <option value="livre">Livré</option>
+          <option value="annule">Annulé</option>
+        </select>
+      </div>
+      <div class="fgrp"><label>Référence devis</label><input id="m-ref" placeholder="DEV-2024-001"/></div>
+      <div class="fgrp"><label>Date devis</label><input id="m-ddevis" type="date"/></div>
+      <div class="fgrp"><label>Date commande</label><input id="m-dcmd" type="date"/></div>
+      <div class="fgrp"><label>Date livraison</label><input id="m-dliv" type="date"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-machine')">Annuler</button>
+      <button class="btn btn-g" onclick="submitMachine()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RENOMMER ZONE -->
+<div class="modal-bg" id="modal-rename">
+  <div class="rename-modal">
+    <h3>Modifier la zone</h3>
+    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Nom de la zone</label>
+    <input class="rename-input" id="rename-input" maxlength="40" placeholder="Nouveau nom…"/>
+    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:8px">Couleur</label>
+    <div class="rename-colors" id="rename-colors"></div>
+    <div class="modal-actions">
+      <button class="btn btn-r" onclick="deleteZone()" style="margin-right:auto">Supprimer la zone</button>
+      <button class="btn" onclick="closeModal('modal-rename')">Annuler</button>
+      <button class="btn btn-g" onclick="submitRename()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BUDGET = 300000;
+const PALETTE = ['#378ADD','#1D9E75','#D4537E','#888780','#EF9F27','#E24B4A','#9B59B6','#E67E22','#27AE60','#2C3E50','#F39C12','#1ABC9C'];
+const SLABEL = {devis:'Devis',valide:'Validé',commande:'Commandé',livre:'Livré',annule:'Annulé'};
+
+let filter = 'tous';
+let openZ = {};
+let modalZone = null;
+let renameZone = null;
+let nextId = 50;
+let selectedNewColor = PALETTE[0];
+let selectedRenameColor = null;
+
+const DEFAULT_ZONES = [
+  {name:'Labo', color:'#378ADD'},
+  {name:'Graviclean', color:'#1D9E75'},
+  {name:'Gravikit', color:'#D4537E'},
+  {name:'Général', color:'#888780'},
+  {name:'Électronicien', color:'#EF9F27'}
+];
+const DEFAULT_DATA = {
+  Labo:[
+    {id:1,machine:'Analyseur granulométrique',fournisseur:'Malvern Panalytical',devis:28500,statut:'commande',dDevis:'2024-01-12',dCmd:'2024-02-05',dLiv:'',ref:'DEV-001'},
+    {id:2,machine:'Balance de précision',fournisseur:'Mettler Toledo',devis:4200,statut:'livre',dDevis:'2024-01-03',dCmd:'2024-01-15',dLiv:'2024-02-10',ref:'DEV-002'},
+    {id:3,machine:'Étuve ventilée 200L',fournisseur:'Memmert',devis:6800,statut:'devis',dDevis:'2024-02-20',dCmd:'',dLiv:'',ref:'DEV-003'},
+  ],
+  Graviclean:[
+    {id:4,machine:'Système lavage ultrason',fournisseur:'Elma',devis:15000,statut:'valide',dDevis:'2024-01-08',dCmd:'',dLiv:'',ref:'DEV-004'},
+    {id:5,machine:'Sécheur centrifuge',fournisseur:'Rösler',devis:22000,statut:'devis',dDevis:'2024-02-14',dCmd:'',dLiv:'',ref:'DEV-005'},
+  ],
+  Gravikit:[
+    {id:6,machine:'Doseur gravimétrique',fournisseur:'Brabender',devis:18500,statut:'commande',dDevis:'2024-01-02',dCmd:'2024-01-20',dLiv:'',ref:'DEV-006'},
+    {id:7,machine:'Mélangeur bi-vis',fournisseur:'Coperion',devis:45000,statut:'devis',dDevis:'2024-02-18',dCmd:'',dLiv:'',ref:'DEV-007'},
+    {id:8,machine:'Trémie stockage x3',fournisseur:'Motan',devis:9600,statut:'livre',dDevis:'2024-01-05',dCmd:'2024-01-25',dLiv:'2024-02-20',ref:'DEV-008'},
+  ],
+  'Général':[
+    {id:9,machine:'Pont roulant 5T',fournisseur:'Verlinde',devis:32000,statut:'valide',dDevis:'2024-01-10',dCmd:'',dLiv:'',ref:'DEV-009'},
+    {id:10,machine:'Compresseur 500L',fournisseur:'Atlas Copco',devis:8900,statut:'livre',dDevis:'2024-01-04',dCmd:'2024-01-18',dLiv:'2024-02-05',ref:'DEV-010'},
+  ],
+  'Électronicien':[
+    {id:11,machine:'Oscilloscope numérique',fournisseur:'Keysight',devis:7500,statut:'valide',dDevis:'2024-01-15',dCmd:'',dLiv:'',ref:'DEV-011'},
+    {id:12,machine:'Station reprise CMS',fournisseur:'JBC Tools',devis:12000,statut:'devis',dDevis:'2024-02-22',dCmd:'',dLiv:'',ref:'DEV-012'},
+    {id:13,machine:'Alimentation programmable',fournisseur:'Rohde & Schwarz',devis:5500,statut:'commande',dDevis:'2024-01-07',dCmd:'2024-01-28',dLiv:'',ref:'DEV-013'},
+  ]
+};
+
+/* STATE */
+let zones, machineData;
+
+function loadState(){
+  try{
+    const s=localStorage.getItem('srctur_v3');
+    if(s){const p=JSON.parse(s);zones=p.zones;machineData=p.machineData;return;}
+  }catch(e){}
+  zones=JSON.parse(JSON.stringify(DEFAULT_ZONES));
+  machineData=JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+
+function saveState(){
+  try{
+    localStorage.setItem('srctur_v3',JSON.stringify({zones,machineData}));
+    document.getElementById('last-save').textContent='Sauvegardé à '+new Date().toLocaleTimeString('fr-FR');
+  }catch(e){}
+}
+
+loadState();
+zones.forEach(z=>{ if(openZ[z.name]===undefined) openZ[z.name]=false; });
+if(zones.length>0) openZ[zones[0].name]=true;
+
+/* HELPERS */
+function fmt(n){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n)}
+function fmtDate(d){if(!d||d==='—')return '—';try{const p=d.split('-');if(p.length===3)return p[2]+'/'+p[1]+'/'+p[0];return d;}catch(e){return d}}
+function zoneColor(name){const z=zones.find(z=>z.name===name);return z?z.color:'#888780'}
+function zoneTot(name){return(machineData[name]||[]).reduce((s,m)=>s+m.devis,0)}
+function grandTot(){return zones.reduce((s,z)=>s+zoneTot(z.name),0)}
+function allMachines(){return zones.flatMap(z=>machineData[z.name]||[])}
+
+/* FILTER */
+function setF(f,btn){
+  filter=f;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderZones();
+}
+
+/* TOGGLE ZONE */
+function toggleZ(name){openZ[name]=!openZ[name];renderZones()}
+
+/* ZONE RENAME MODAL */
+function openRename(name){
+  renameZone=name;
+  const z=zones.find(z=>z.name===name);
+  selectedRenameColor=z.color;
+  document.getElementById('rename-input').value=name;
+  buildColorPicker('rename-colors','rename',z.color);
+  document.getElementById('modal-rename').classList.add('open');
+  setTimeout(()=>document.getElementById('rename-input').focus(),80);
+}
+
+function submitRename(){
+  const newName=document.getElementById('rename-input').value.trim();
+  if(!newName){toast('Le nom ne peut pas être vide');return}
+  if(newName!==renameZone && zones.find(z=>z.name===newName)){toast('Ce nom de zone existe déjà');return}
+  const z=zones.find(z=>z.name===renameZone);
+  // rename in machineData
+  if(newName!==renameZone){
+    machineData[newName]=machineData[renameZone]||[];
+    delete machineData[renameZone];
+    const was=openZ[renameZone];
+    delete openZ[renameZone];
+    openZ[newName]=was;
+    if(modalZone===renameZone) modalZone=newName;
+  }
+  z.name=newName;
+  z.color=selectedRenameColor;
+  closeModal('modal-rename');
+  saveState();render();
+  toast('Zone mise à jour');
+}
+
+function deleteZone(){
+  const nb=(machineData[renameZone]||[]).length;
+  const msg=nb>0?`Supprimer la zone "${renameZone}" et ses ${nb} machine(s) ?`:`Supprimer la zone "${renameZone}" ?`;
+  if(!confirm(msg))return;
+  zones=zones.filter(z=>z.name!==renameZone);
+  delete machineData[renameZone];
+  delete openZ[renameZone];
+  closeModal('modal-rename');
+  saveState();render();
+  toast('Zone supprimée');
+}
+
+/* ADD ZONE */
+function addZone(){
+  const name=document.getElementById('new-zone-name').value.trim();
+  if(!name){toast('Entrez un nom de zone');return}
+  if(zones.find(z=>z.name===name)){toast('Ce nom de zone existe déjà');return}
+  zones.push({name,color:selectedNewColor});
+  machineData[name]=[];
+  openZ[name]=true;
+  document.getElementById('new-zone-name').value='';
+  saveState();render();
+  toast('Zone "'+name+'" créée');
+}
+
+/* COLOR PICKERS */
+function buildColorPicker(containerId, type, selectedColor){
+  const el=document.getElementById(containerId);
+  el.innerHTML=PALETTE.map(c=>`<div class="cp${c===selectedColor?' sel':''}" style="background:${c}" onclick="selectColor('${type}','${c}',this)" title="${c}"></div>`).join('');
+}
+
+function selectColor(type, color, el){
+  if(type==='new'){
+    selectedNewColor=color;
+    document.querySelectorAll('#new-zone-colors .cp').forEach(e=>e.classList.remove('sel'));
+  } else {
+    selectedRenameColor=color;
+    document.querySelectorAll('#rename-colors .cp').forEach(e=>e.classList.remove('sel'));
+  }
+  el.classList.add('sel');
+}
+
+/* MACHINE MODAL */
+function openMachineModal(zone){
+  modalZone=zone;
+  document.getElementById('modal-zone-label').textContent='Zone : '+zone;
+  ['m-machine','m-four','m-ref'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-montant').value='';
+  document.getElementById('m-statut').value='devis';
+  ['m-ddevis','m-dcmd','m-dliv'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-machine').classList.add('open');
+  setTimeout(()=>document.getElementById('m-machine').focus(),80);
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function submitMachine(){
+  const machine=document.getElementById('m-machine').value.trim();
+  const devis=parseFloat(document.getElementById('m-montant').value)||0;
+  if(!machine){toast('Nom de machine requis');return}
+  if(!devis){toast('Montant requis');return}
+  if(!machineData[modalZone]) machineData[modalZone]=[];
+  machineData[modalZone].push({
+    id:nextId++,machine,
+    fournisseur:document.getElementById('m-four').value.trim(),
+    devis,statut:document.getElementById('m-statut').value,
+    dDevis:document.getElementById('m-ddevis').value,
+    dCmd:document.getElementById('m-dcmd').value,
+    dLiv:document.getElementById('m-dliv').value,
+    ref:document.getElementById('m-ref').value.trim()
+  });
+  closeModal('modal-machine');
+  saveState();render();
+  toast('Machine ajoutée');
+}
+
+function delMachine(zone,id){
+  if(!confirm('Supprimer cette machine ?'))return;
+  machineData[zone]=machineData[zone].filter(m=>m.id!==id);
+  saveState();render();toast('Machine supprimée');
+}
+
+function changeStatus(zone,id,val){
+  const m=(machineData[zone]||[]).find(m=>m.id===id);
+  if(m){m.statut=val;saveState();render();toast('Statut mis à jour')}
+}
+
+function editCell(zone,id,field,el){
+  const m=(machineData[zone]||[]).find(m=>m.id===id);
+  if(!m)return;
+  const orig=el.textContent;
+  const inp=document.createElement('input');
+  inp.className='cell-input';
+  inp.value=field==='devis'?m.devis:(m[field]||'');
+  if(field==='devis')inp.type='number';
+  inp.style.minWidth='80px';
+  el.replaceWith(inp);inp.focus();inp.select();
+  function commit(){
+    let val=inp.value.trim();
+    if(field==='devis'){val=parseFloat(val)||0;m.devis=val;}
+    else{m[field]=val;}
+    saveState();render();toast('Modifié');
+  }
+  inp.addEventListener('blur',commit);
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();commit()}
+    if(e.key==='Escape'){inp.replaceWith(el)}
+  });
+}
+
+/* EXPORT */
+function exportCSV(){
+  let csv='\uFEFFZone,Machine,Fournisseur,Montant HT,Statut,Réf.,Date devis,Date commande,Date livraison\n';
+  zones.forEach(z=>{
+    (machineData[z.name]||[]).forEach(m=>{
+      csv+=`"${z.name}","${m.machine}","${m.fournisseur||''}","${m.devis}","${SLABEL[m.statut]}","${m.ref||''}","${fmtDate(m.dDevis)}","${fmtDate(m.dCmd)}","${fmtDate(m.dLiv)}"\n`;
+    });
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='suivi_parc_machine.csv';a.click();
+  toast('CSV exporté');
+}
+
+function confirmReset(){
+  if(!confirm('Réinitialiser toutes les données ?'))return;
+  zones=JSON.parse(JSON.stringify(DEFAULT_ZONES));
+  machineData=JSON.parse(JSON.stringify(DEFAULT_DATA));
+  openZ={};zones.forEach((z,i)=>openZ[z.name]=i===0);
+  saveState();render();toast('Données réinitialisées');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* RENDERS */
+function renderMetrics(){
+  const tot=grandTot(),reste=BUDGET-tot;
+  const livre=allMachines().filter(m=>m.statut==='livre').reduce((s,m)=>s+m.devis,0);
+  const nb=allMachines().length;
+  const p=Math.min(Math.round(tot/BUDGET*100),100);
+  document.getElementById('metrics').innerHTML=`
+    <div class="mc"><div class="mc-lbl">Budget total</div><div class="mc-val">${fmt(BUDGET)}</div><div class="mc-sub">Subvention accordée</div><div class="mc-bar"><div class="mc-fill" style="width:100%;background:var(--teal)"></div></div></div>
+    <div class="mc"><div class="mc-lbl">Total devisé</div><div class="mc-val ${p>90?'c-err':p>75?'c-warn':''}">${fmt(tot)}</div><div class="mc-sub">${p}% du budget · ${nb} machines</div><div class="mc-bar"><div class="mc-fill" style="width:${p}%;background:${p>90?'var(--red)':p>75?'var(--amber)':'var(--blue)'}"></div></div></div>
+    <div class="mc"><div class="mc-lbl">Reste disponible</div><div class="mc-val ${reste<0?'c-err':'c-ok'}">${fmt(reste)}</div><div class="mc-sub">${reste<0?'Dépassement !':'Disponible'}</div><div class="mc-bar"><div class="mc-fill" style="width:${Math.max(0,reste/BUDGET*100).toFixed(0)}%;background:${reste<0?'var(--red)':'var(--teal)'}"></div></div></div>
+    <div class="mc"><div class="mc-lbl">Livré</div><div class="mc-val c-ok">${fmt(livre)}</div><div class="mc-sub">${Math.round(livre/BUDGET*100)}% du budget reçu</div><div class="mc-bar"><div class="mc-fill" style="width:${Math.round(livre/BUDGET*100)}%;background:var(--teal)"></div></div></div>
+  `;
+  document.getElementById('nb-total').textContent=nb+' machine'+(nb>1?'s':'')+' · '+zones.length+' zone'+(zones.length>1?'s':'');
+}
+
+function renderChart(){
+  const tot=grandTot()||1;
+  let h='';
+  zones.forEach(z=>{
+    const zt=zoneTot(z.name),p=Math.round(zt/BUDGET*100),bw=Math.round(zt/tot*100);
+    h+=`<div class="cr">
+      <div class="cr-lbl">${z.name}</div>
+      <div class="cr-track"><div class="cr-fill" style="width:${bw}%;background:${z.color}">${bw>14?`<span class="cr-fill-lbl">${p}%</span>`:''}</div></div>
+      ${bw<=14?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);min-width:28px">${p}%</span>`:'<span style="min-width:28px"></span>'}
+      <div class="cr-amt">${fmt(zt)}</div>
+      <div class="cr-pct">${(zt/BUDGET*100).toFixed(1)}%</div>
+    </div>`;
+  });
+  document.getElementById('bar-chart').innerHTML=h||'<p style="font-size:13px;color:var(--text3);text-align:center;padding:10px">Aucune zone créée</p>';
+}
+
+function renderZones(){
+  let h='';
+  zones.forEach(z=>{
+    const zt=zoneTot(z.name),open=openZ[z.name];
+    const p=(zt/BUDGET*100).toFixed(1);
+    const machines=(machineData[z.name]||[]).filter(m=>filter==='tous'||m.statut===filter);
+
+    h+=`<div class="zone">
+      <div class="zone-hd">
+        <div class="zdot" style="background:${z.color}" onclick="openRename('${z.name}')" title="Modifier la zone"></div>
+        <div class="zname-wrap">
+          <div class="zname">${z.name}</div>
+          <button class="zname-edit-btn" onclick="openRename('${z.name}')" title="Renommer / modifier">✎ modifier</button>
+        </div>
+        <div class="zcnt">${(machineData[z.name]||[]).length} machine${(machineData[z.name]||[]).length!==1?'s':''}</div>
+        <div class="ztot">${fmt(zt)}</div>
+        <div class="zprog">
+          <div class="zpbar"><div class="zpfill" style="width:${Math.min(parseFloat(p),100)}%;background:${z.color}"></div></div>
+          <div class="zpct">${p}% du budget</div>
+        </div>
+        <div class="zone-actions">
+          <button class="icon-btn expand ${open?'o':''}" onclick="toggleZ('${z.name}')">&#9658;</button>
+        </div>
+      </div>`;
+
+    if(open){
+      h+=`<div class="zone-body"><div style="overflow-x:auto">
+        <table class="tbl">
+          <colgroup><col style="width:20%"><col style="width:14%"><col style="width:10%"><col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:4%"></colgroup>
+          <thead><tr>
+            <th>Machine <span style="font-weight:400;color:var(--blue-d);font-size:9px">(clic = éditer)</span></th>
+            <th>Fournisseur</th><th>Montant HT</th><th>Statut</th>
+            <th>Réf.</th><th>Date devis</th><th>Commande</th><th>Livraison</th><th></th>
+          </tr></thead>
+          <tbody>`;
+      if(machines.length===0){
+        h+=`<tr class="empty-row"><td colspan="9">${filter!=='tous'?'Aucune machine pour ce filtre':'Aucune machine — cliquez sur "+ Ajouter" ci-dessous'}</td></tr>`;
+      } else {
+        machines.forEach(m=>{
+          h+=`<tr>
+            <td><span class="editable" onclick="editCell('${z.name}',${m.id},'machine',this)">${m.machine}</span></td>
+            <td><span class="editable" onclick="editCell('${z.name}',${m.id},'fournisseur',this)" style="color:var(--text2)">${m.fournisseur||'—'}</span></td>
+            <td><span class="editable" onclick="editCell('${z.name}',${m.id},'devis',this)" style="font-family:'DM Mono',monospace;font-weight:500">${fmt(m.devis)}</span></td>
+            <td><select class="ssel" onchange="changeStatus('${z.name}',${m.id},this.value)">${['devis','valide','commande','livre','annule'].map(s=>`<option value="${s}"${m.statut===s?' selected':''}>${SLABEL[s]}</option>`).join('')}</select></td>
+            <td><span class="editable" onclick="editCell('${z.name}',${m.id},'ref',this)" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${m.ref||'—'}</span></td>
+            <td><span class="editable" onclick="editCell('${z.name}',${m.id},'dDevis',this)" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fmtDate(m.dDevis)}</span></td>
+            <td><span class="editable" onclick="editCell('${z.name}',${m.id},'dCmd',this)" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fmtDate(m.dCmd)}</span></td>
+            <td><span class="editable" onclick="editCell('${z.name}',${m.id},'dLiv',this)" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fmtDate(m.dLiv)}</span></td>
+            <td><button class="del-btn" onclick="delMachine('${z.name}',${m.id})">✕</button></td>
+          </tr>`;
+        });
+      }
+      h+=`</tbody></table></div>
+        <div class="zone-foot">
+          <button class="btn btn-g" onclick="openMachineModal('${z.name}')">+ Ajouter une machine</button>
+          <span style="font-size:11px;color:var(--text3)">Cliquez sur une valeur pour la modifier</span>
+        </div>
+      </div>`;
+    }
+    h+=`</div>`;
+  });
+  document.getElementById('zones').innerHTML=h;
+}
+
+function render(){renderMetrics();renderChart();renderZones()}
+
+/* INIT */
+document.getElementById('now').textContent=new Date().toLocaleDateString('fr-FR');
+buildColorPicker('new-zone-colors','new', selectedNewColor);
+
+document.querySelectorAll('.modal-bg').forEach(el=>{
+  el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open')});
+});
+
+render();
+</script>
+</body>
+</html>
